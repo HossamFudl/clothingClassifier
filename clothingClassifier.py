@@ -1,13 +1,3 @@
-"""
-COMPLETE CAROUSELL CLOTHING CLASSIFIER
-======================================
-Features:
-1. Check for existing trained model first
-2. Skip training if model exists
-3. Interactive prediction mode
-4. Send image path and get classification
-"""
-
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers, models, callbacks
@@ -22,10 +12,6 @@ from datetime import datetime
 print("\n" + "="*80)
 print("🧥 CAROUSELL CLOTHING CLASSIFIER - COMPLETE SYSTEM")
 print("="*80)
-
-# ============================================================================
-# CONFIGURATION
-# ============================================================================
 
 IMG_SIZE = 224
 BATCH_SIZE = 32
@@ -63,13 +49,7 @@ CLASS_NAMES_MAPPING = {
     'Sweter': 'Sweater 🧶'
 }
 
-# ============================================================================
-# PREDICTION FUNCTIONS
-# ============================================================================
-
 def load_trained_model():
-    """Load existing trained model"""
-    # Try best model first, then regular model
     model_to_load = BEST_MODEL_PATH if os.path.exists(BEST_MODEL_PATH) else MODEL_PATH
     
     if not os.path.exists(model_to_load):
@@ -96,14 +76,11 @@ def load_trained_model():
         return None, None
 
 def predict_image(model, class_names, image_path, show_plot=True):
-    """Predict clothing type from image"""
-    
     if not os.path.exists(image_path):
         print(f"\n❌ ERROR: Image not found: {image_path}")
         return None
     
     try:
-        # Load and preprocess image
         print(f"\n🔍 Analyzing image: {os.path.basename(image_path)}")
         
         img = keras.preprocessing.image.load_img(
@@ -113,16 +90,13 @@ def predict_image(model, class_names, image_path, show_plot=True):
         img_array = keras.preprocessing.image.img_to_array(img)
         img_array = np.expand_dims(img_array, axis=0)
         
-        # Make prediction
         predictions = model.predict(img_array, verbose=0)[0]
         predicted_idx = np.argmax(predictions)
         predicted_class = class_names[predicted_idx]
         confidence = predictions[predicted_idx]
         
-        # Get top 5 predictions
         top_5_indices = np.argsort(predictions)[-5:][::-1]
         
-        # Display results
         print("\n" + "="*80)
         print(f"📸 PREDICTION RESULTS")
         print("="*80)
@@ -141,7 +115,6 @@ def predict_image(model, class_names, image_path, show_plot=True):
             print(f"  {i}. {display:<30} {conf:>6.2%}  {bar}")
         print("="*80 + "\n")
         
-        # Show image with prediction
         if show_plot:
             plt.figure(figsize=(10, 8))
             plt.imshow(img)
@@ -152,7 +125,6 @@ def predict_image(model, class_names, image_path, show_plot=True):
             
             plt.tight_layout()
             
-            # Save prediction result
             output_path = os.path.join('outputs', f'prediction_{os.path.basename(image_path)}')
             plt.savefig(output_path, dpi=150, bbox_inches='tight')
             print(f"💾 Prediction image saved: {output_path}")
@@ -179,7 +151,6 @@ def predict_image(model, class_names, image_path, show_plot=True):
         return None
 
 def interactive_prediction_mode(model, class_names):
-    """Interactive mode for predictions"""
     print("\n" + "="*80)
     print("🎭 INTERACTIVE PREDICTION MODE")
     print("="*80)
@@ -223,7 +194,6 @@ def interactive_prediction_mode(model, class_names):
                     if result:
                         results.append(result)
                 
-                # Summary
                 if results:
                     print("\n" + "="*80)
                     print("📊 BATCH PREDICTION SUMMARY")
@@ -238,12 +208,7 @@ def interactive_prediction_mode(model, class_names):
         else:
             print("⚠️  Please enter a valid image path or command")
 
-# ============================================================================
-# TRAINING FUNCTIONS
-# ============================================================================
-
 def check_dataset_exists():
-    """Check if training dataset exists"""
     if not os.path.exists(TRAIN_DIR):
         print(f"\n❌ ERROR: Training directory not found: {TRAIN_DIR}")
         return False
@@ -255,13 +220,10 @@ def check_dataset_exists():
     return True
 
 def train_model():
-    """Complete training process"""
-    
     print("\n" + "="*80)
     print("🏋️ STARTING TRAINING PROCESS")
     print("="*80)
     
-    # Check directories
     if not check_dataset_exists():
         print("\nPlease ensure your dataset is organized as:")
         print(f"  {TRAIN_DIR}/")
@@ -274,7 +236,6 @@ def train_model():
         print(f"    └── ... (other classes)")
         return None, None
     
-    # Create data generators
     print("\n[CREATE] Data Generators...")
     
     train_datagen = ImageDataGenerator(
@@ -313,7 +274,6 @@ def train_model():
     
     print(f"✓ Classes: {num_classes}")
     
-    # Build model
     print("\n[BUILD] Model...")
     
     base_model = MobileNetV2(
@@ -339,7 +299,6 @@ def train_model():
     
     print("✓ Model built")
     
-    # Phase 1: Train with frozen base
     print("\n" + "="*80)
     print("🚀 PHASE 1: Initial Training (Frozen Base)")
     print("="*80)
@@ -380,7 +339,6 @@ def train_model():
         verbose=1
     )
     
-    # Phase 2: Fine-tuning
     print("\n" + "="*80)
     print("🚀 PHASE 2: Fine-Tuning")
     print("="*80)
@@ -425,7 +383,6 @@ def train_model():
         verbose=1
     )
     
-    # Combine histories
     combined_history = {
         'loss': history_phase1.history['loss'] + history_phase2.history['loss'],
         'accuracy': history_phase1.history['accuracy'] + history_phase2.history['accuracy'],
@@ -433,7 +390,6 @@ def train_model():
         'val_accuracy': history_phase1.history['val_accuracy'] + history_phase2.history['val_accuracy'],
     }
     
-    # Save results
     print("\n[SAVE] Saving results...")
     
     model.save(MODEL_PATH)
@@ -448,7 +404,6 @@ def train_model():
         json.dump(history_serializable, f, indent=2)
     print(f"✓ History saved: {HISTORY_PATH}")
     
-    # Plot
     fig, axes = plt.subplots(1, 2, figsize=(15, 5))
     
     epochs_range = range(1, len(combined_history['accuracy']) + 1)
@@ -480,7 +435,6 @@ def train_model():
     
     plt.close()
     
-    # Final results
     final_val_acc = combined_history['val_accuracy'][-1]
     print(f"\n" + "="*80)
     print(f"✅ TRAINING COMPLETE!")
@@ -491,20 +445,12 @@ def train_model():
     
     return model, class_names
 
-# ============================================================================
-# MAIN EXECUTION
-# ============================================================================
-
 def main():
-    """Main execution function"""
-    
     print("\n🔍 Checking for existing trained model...")
     
-    # Try to load existing model
     model, class_names = load_trained_model()
     
     if model is not None and class_names is not None:
-        # Model exists - go straight to prediction
         print("\n✅ Found trained model! Skipping training.")
         print("\n" + "="*80)
         print("MENU OPTIONS:")
@@ -530,7 +476,6 @@ def main():
             print("\n👋 Exiting. Goodbye!")
     
     else:
-        # No model found - need to train
         print("\n⚠️  No trained model found. Training required.")
         print("\n" + "="*80)
         print("OPTIONS:")
